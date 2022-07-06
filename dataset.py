@@ -67,6 +67,11 @@ def sdo_intscale(header, data):
         assert True
 
 
+class SDOPrep:
+    def __init__(self, sdodataset):
+        self.header = sdodataset.header
+#        self.
+
 class SDODataset(Dataset):
 
     def read_fits(self, file_fits):
@@ -95,6 +100,8 @@ class SDODataset(Dataset):
         CRPIX2_new = self.header['NAXIS2']//2 - 0.5
         CDELT1_new = 0.6
         CDELT2_new = 0.6
+
+        ## include centering, rotating, normalize, degradation?
 
         print(
             self.header['CDELT1'],
