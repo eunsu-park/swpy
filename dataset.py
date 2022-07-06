@@ -67,10 +67,59 @@ def sdo_intscale(header, data):
         assert True
 
 
-class SDOPrep:
-    def __init__(self, sdodataset):
-        self.header = sdodataset.header
-#        self.
+
+def rotating_sdo(header, data):
+    ## scipy? scikit-image?
+    return header, data
+
+def centering_sdo(header, data):
+    ## is it necessary to apply subpix interpolation?
+    return header, data
+
+def normalizing_aia(header, data):
+    exptime = header['EXPTIME']
+    data = data / exptime
+    header['EXPTIME'] = 1.0
+    return header, data
+
+def prep_sdo(sdodataset):
+    #Centering, Rotating
+    header = sdodataset.header
+    data = sdodataset.data
+
+    CDELT1 = header['CDELT1']
+    CDELT2 = header['CDELT2']
+    CRPIX1 = header['CRPIX1']
+    CRPIX2 = header['CRPIX2']
+    NAXIS1 = header['NAXIS1']
+    NAXIS2 = header['NAXIS2']
+    CROTA2 = header['CROTA2']
+
+    CRPIX1_new = header['NAXIS1']//2 - 0.5
+    CRPIX2_new = header['NAXIS2']//2 - 0.5
+    CDELT1_new = 0.6
+    CDELT2_new = 0.6
+
+    header, data = centering_sdo(header, data)
+    header, data = rotating_sdo(header, data)
+    
+
+    header['CRPIX1'] = CRPIX1_new
+    header['CRPIX2'] = CRPIX2_new
+    header['CDELT1'] = CDELT1_new
+    header['CDELT2'] = CDELT2_new
+
+    header.update({
+        'R_SUN' : header['RSUN_OBS']/header['CDELT1'],
+        'LVL_NUM' : 1.5,
+        'BITPIX' : -64
+    })
+
+    sdodataset.header = header
+    sdodataset.data = data
+
+    return sdodataset
+
 
 class SDODataset(Dataset):
 
@@ -94,24 +143,6 @@ class SDODataset(Dataset):
         plt.imshow(image, cmap='gray')
         plt.show()
 
-    def prep(self):
-
-        CRPIX1_new = self.header['NAXIS1']//2 - 0.5
-        CRPIX2_new = self.header['NAXIS2']//2 - 0.5
-        CDELT1_new = 0.6
-        CDELT2_new = 0.6
-
-        ## include centering, rotating, normalize, degradation?
-
-        print(
-            self.header['CDELT1'],
-            self.header['CDELT2'],
-            self.header['CRPIX1'],
-            self.header['CRPIX2'],
-            self.header['CROTA2'],
-            self.header['NAXIS1'],
-            self.header['NAXIS2'],
-        )
 
 
 class HMIDataset(SDODataset):
@@ -149,4 +180,7 @@ if __name__ == '__main__' :
         print(header['WAVELNTH'], data.shape, dataset.all)
 
     dataset.plot()
-    dataset.prep()
+    print(dataset.header['CDELT1'])
+    prep_sdo(dataset)
+    print(dataset.header['CDELT1'])
+
