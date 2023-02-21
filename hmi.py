@@ -1,6 +1,7 @@
 import urllib
 import ftplib
 import string
+import os
 
 
 def make_directory(filepath):
@@ -170,8 +171,7 @@ def download_FITS():
     now = datetime.datetime.utcnow() - datetime.timedelta(hours = 15)
 
     list_fits = get_list_from_HTTP(pre, now, "fits")
-    #local_dir = "/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
-    local_dir = "/home/eunsu/Drives/SWPy/hmi/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
+    local_dir = "/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
    
     print(len(list_fits))
 
@@ -191,8 +191,7 @@ def download_FITS_hourly():
     now = datetime.datetime.utcnow()
     list_fits = get_list_from_HTTP_hourly(now, "fits")
 
-#    local_dir = "/data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
-    local_dir = "/home/eunsu/Drives/SWPy/hmi/data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
+    local_dir = "/data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
    
     print(len(list_fits))
 
@@ -226,49 +225,78 @@ def download_FITS_hourly():
 
 
 
-def upload_FTP():
+def upload_SFTP():
+    import paramiko
     import datetime
 
-#    now  = datetime.datetime.today() - datetime.timedelta(days=1)
     now = datetime.datetime.today()
     file_name = now.strftime("%Y%m%d") + ".txt"
     local_path = "/data/flare_forecast_out/" + file_name
     remote_dir = "/data/kasi/flare_forecast/" + now.strftime("%Y") + "/"
     latest_dir = "/data/kasi/flare_forecast/"
 
-    try:
-        connect = ftplib.FTP("swc.kasi.re.kr", "swc", "s0s.kasi.2010")
-    except Exception, e:
-        print e
-    else:
-        try:
-            file = open(local_path, "rb")
-        except Exception, e:
-            print "File open failed..."
-        else:
-            connect.cwd(remote_dir)
-            try:
-                connect.storbinary("STOR " + file_name, file)
-            except Exception , e:
-                print e
-            else:
-                file.close()
+    host = "swc.kasi.re.kr??"
+    port = 7774
+    user = "swc"
+    passwd = "s0s.kasi.2010"
 
-        try:
+    try :
+        transport = paramiko.transport.Transport(host, port)
+        transport.connect(username=user, password=passwd)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+    except Exception as e :
+        print(e)
+    else :
+        try :
             file = open(local_path, "rb")
-        except Exception, e:
-            print "Latest file open failed..."
-        else:
-            connect.cwd(latest_dir)
-            try:
-                connect.storbinary("STOR latest.txt", file)
-            except Exception, e:
-                print e
-            else:
-                file.close()
-                connect.quit()
+        except Exception as e :
+            print("File open failed...")
+        else :
+            print(remote_dir)
+            try :
+                sftp.chdir(remote_dir)
+            except :
+                sftp.mkdir(remote_dir)
+                sftp.chdir(remote_dir)
 
-    return True
+            #sftp.put(file, file_name)
+            sftp.putfo(file, file_name)
+            file.close()
+
+        try :
+            file = open(local_path, "rb")
+        except Exception as e :
+            print("Latest file open failed...")
+        else :
+            print(latest_dir)
+            try :
+                sftp.chdir(latest_dir)
+            except :
+                sftp.mkdir(latest_dir)
+                sftp.chdir(latest_dir)
+
+            #sftp.put(file, file_name)
+            sftp.putfo(file, file_name)
+            file.close()
+
+
+        sftp.close()
+
+    #     try:
+    #         file = open(local_path, "rb")
+    #     except Exception, e:
+    #         print "Latest file open failed..."
+    #     else:
+    #         connect.cwd(latest_dir)
+    #         try:
+    #             connect.storbinary("STOR latest.txt", file)
+    #         except Exception, e:
+    #             print e
+    #         else:
+    #             file.close()
+    #             connect.quit()
+
+    # return True
 
 
 
@@ -279,8 +307,7 @@ if __name__ == "__main__" :
     ## Test download_HTTP_file ##
 
     strSrcUrl = "http://swds.kasi.re.kr/data/arm/nasa/sdo/latest_193_1024.jpg"
-    strDstFile = "/home/eunsu/Drives/SWPy/hmi/download_HTTP_file/tmp.jpg"
-
+    strDstFile = "/home/eunsu/Drives/SWPy/hmi/tmp.jpg"
     download_HTTP_file(strSrcUrl, strDstFile)
 
 
@@ -292,6 +319,7 @@ if __name__ == "__main__" :
 
 
     ## Test get_list_from_HTTP ##
+
     pre = datetime.datetime.utcnow() - datetime.timedelta(days = 1, hours = 15)
     now = datetime.datetime.utcnow() - datetime.timedelta(hours = 15)
     list_fits = get_list_from_HTTP(pre, now, "fits")
@@ -299,10 +327,13 @@ if __name__ == "__main__" :
 
 
     ## Test download_FITS() ##
-#    download_FITS()
+
+    download_FITS()
 
     ## Test download_FITS_hourly ##
-#    download_FITS_hourly()
+
+    download_FITS_hourly()
 
     ## Test upload_FTP ##
-    upload_FTP()
+
+    upload_SFTP()
