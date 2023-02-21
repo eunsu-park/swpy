@@ -1,4 +1,4 @@
-import urllib2
+import urllib
 import ftplib
 import string
 #import datetime
@@ -39,43 +39,43 @@ def download_HTTP_file(strSrcUrl, strDstFile):
 
             t = 0
             break
-        except httplib.HTTPException, msg:
+        except httplib.HTTPException as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.NotConnected, msg:
+        except httplib.NotConnected as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.InvalidURL, msg:
+        except httplib.InvalidURL as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.UnknownProtocol, msg:
+        except httplib.UnknownProtocol as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.UnknownTransferEncoding, msg:
+        except httplib.UnknownTransferEncoding as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.UnimplementedFileMode, msg:
+        except httplib.UnimplementedFileMode as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.IncompleteRead, msg:
+        except httplib.IncompleteRead as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.ImproperConnectionState, msg:
+        except httplib.ImproperConnectionState as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.CannotSendRequest, msg:
+        except httplib.CannotSendRequest as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.CannotSendHeader, msg:
+        except httplib.CannotSendHeader as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.ResponseNotReady, msg:
+        except httplib.ResponseNotReady as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except httplib.BadStatusLine, msg:
+        except httplib.BadStatusLine as msg:
             #nFails = nFails + 1
             AlertMessage(msg)
-        except socket.error, e:
+        except socket.error as e:
             AlertMessage("Socket exception error, %s."%e)
         # finally:
             #nFails = nFails + 1
@@ -109,7 +109,7 @@ def get_list_from_HTTP_hourly(cur, ext_list = None):
     ################################
     strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + cur.strftime("%Y/%m/%d/") 
     try:
-        response = urllib2.urlopen(strurl)
+        response = urllib.urlopen(strurl)
         if (response == None):
             return list
 
@@ -144,7 +144,7 @@ def get_list_from_HTTP_hourly(cur, ext_list = None):
 
         strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + pre.strftime("%Y/%m/%d/") 
         try:
-            response = urllib2.urlopen(strurl)
+            response = urllib.urlopen(strurl)
             if (response == None):
                 return list
 
@@ -184,7 +184,7 @@ def get_list_from_HTTP(pre, now, ext_list = None):
     strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + pre.strftime("%Y/%m/%d/") 
 #    print strurl
     try:
-        response = urllib2.urlopen(strurl)
+        response = urllib.urlopen(strurl)
         
         if (response == None):
             return ""
@@ -218,7 +218,7 @@ def get_list_from_HTTP(pre, now, ext_list = None):
 ###############################
     strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + now.strftime("%Y/%m/%d/")
     try:
-        response = urllib2.urlopen(strurl)
+        response = urllib.urlopen(strurl)
         if (response == None):
             return ""
 
@@ -258,7 +258,7 @@ def get_list_from_HTTP(pre, now, ext_list = None):
 #    print cur.strftime("%Y/%m/%d")
 
     try:
-        response = urllib2.urlopen("http://jsoc.stanford.edu/data/hmi/fits/" + pre.strftime("%Y/%m/%d"))
+        response = urllib.urlopen("http://jsoc.stanford.edu/data/hmi/fits/" + pre.strftime("%Y/%m/%d"))
         if (response == None):
             return ""
 
@@ -338,9 +338,10 @@ def download_FITS():
 
     list = get_list_from_HTTP(pre, now, "fits")
 
-    local_dir = "/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
+    local_dir = "./data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
+    ###local_dir = "/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
    
-    print len(list)
+    print (len(list))
 
     for line in list:
 #	print line
@@ -360,9 +361,10 @@ def download_FITS_hourly():
     now = datetime.datetime.utcnow()
     list = get_list_from_HTTP_hourly(now, "fits")
 
-    local_dir = "/data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
+    local_dir = "./data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
+    ###local_dir = "/data/flare_forecast_in/hourly/" + now.strftime("%Y%m%d") + "/"
    
-    print len(list)
+    print (len(list))
 
     for line in list:
 #	print line
@@ -380,9 +382,10 @@ def download_FITS_hourly():
         pre = now - datetime.timedelta(days = 1)
         list = get_list_from_HTTP_hourly(pre, "fits")
 
-        local_dir = "/data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
+        local_dir = "./data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
+        ###local_dir = "/data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
    
-        print len(list)
+        print (len(list))
 
         for line in list:
             file_index = string.rfind(line, '/') + 1
@@ -429,38 +432,43 @@ def upload_FTP():
 #    now  = datetime.datetime.today() - datetime.timedelta(days=1)
     now = datetime.datetime.today()
     file_name = now.strftime("%Y%m%d") + ".txt"
-    local_path = "/data/flare_forecast_out/" + file_name
-    remote_dir = "/data/kasi/flare_forecast/" + now.strftime("%Y") + "/"
-    latest_dir = "/data/kasi/flare_forecast/"
+    local_path = "./data/flare_forecast_out/" + file_name
+    remote_dir = "./data/kasi/flare_forecast/" + now.strftime("%Y") + "/"
+    latest_dir = "./data/kasi/flare_forecast/"
+
+    ###local_path = "/data/flare_forecast_out/" + file_name
+    ###remote_dir = "/data/kasi/flare_forecast/" + now.strftime("%Y") + "/"
+    ###latest_dir = "/data/kasi/flare_forecast/"
+
 
     try:
         connect = ftplib.FTP("swc.kasi.re.kr", "swc", "s0s.kasi.2010")
-    except Exception, e:
-        print e
+    except Exception as e:
+        print (e)
     else:
         try:
             file = open(local_path, "rb")
-        except Exception, e:
-            print "File open failed..."
+        except Exception as e:
+            print ("File open failed...")
         else:
             connect.cwd(remote_dir)
             try:
                 connect.storbinary("STOR " + file_name, file)
-            except Exception , e:
-                print e
+            except Exception as e:
+                print (e)
             else:
                 file.close()
 
         try:
             file = open(local_path, "rb")
-        except Exception, e:
-            print "Latest file open failed..."
+        except Exception as e:
+            print ("Latest file open failed...")
         else:
             connect.cwd(latest_dir)
             try:
                 connect.storbinary("STOR latest.txt", file)
-            except Exception, e:
-                print e
+            except Exception as e:
+                print (e)
             else:
                 file.close()
                 connect.quit()
@@ -477,44 +485,51 @@ def upload_corhole_FTP():
         now  = datetime.datetime.today() - datetime.timedelta(days=1)
     #now = datetime.datetime.today()
     
-    print now.strftime("%Y%m%d %H%M")
-    file_name = now.strftime("%Y%m%d") + ".txt"
-    #file_name = "20160416.txt"
-    local_path = "/NAS/hp06/services/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m") + "/" + now.strftime("%Y%m%d") + "/"
-    remote_dir = "/data/kasi/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m%d") + "/"
-#    latest_dir = "/data/kasi/flare_forecast/"
-    #local_path = "/NAS/hp06/services/corh_aia/2016/201604/20160417/"
-    try:
-	files = os.listdir(local_path)
-        os.chdir(local_path)
-    except Exception, e:
-	print e
-	return False
+        print (now.strftime("%Y%m%d %H%M"))
+        file_name = now.strftime("%Y%m%d") + ".txt"
+        #file_name = "20160416.txt"
 
-#    rb = check_dir(remote_dir)
-#    if (rb == False):
-#	return False
+        local_path = "/NAS/hp06/services/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m") + "/" + now.strftime("%Y%m%d") + "/"
+        remote_dir = "/data/kasi/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m%d") + "/"
 
-    try:
-        connect = ftplib.FTP("swc.kasi.re.kr", "sos", "dnwnghksrud105")
-    except Exception, e:
-        print e
-	return False
+        local_path = "/NAS/hp06/services/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m") + "/" + now.strftime("%Y%m%d") + "/"
+        remote_dir = "/data/kasi/corh_aia/" + now.strftime("%Y") + "/" + now.strftime("%Y%m%d") + "/"
+
+
+    #    latest_dir = "/data/kasi/flare_forecast/"
+        #local_path = "/NAS/hp06/services/corh_aia/2016/201604/20160417/"
+        try:
+            files = os.listdir(local_path)
+            os.chdir(local_path)
+        except Exception as e:
+            print (e)
+        return False
+
+    #    rb = check_dir(remote_dir)
+    #    if (rb == False):
+    #	return False
+
+        try:
+            connect = ftplib.FTP("swc.kasi.re.kr", "sos", "dnwnghksrud105")
+        except Exception as e:
+            print (e)
+        return False
+    
     else:
-	check_dir_rec(connect, remote_dir[1:-1].split('/'))
-	connect.cwd(remote_dir)
-	for f in files:
-	    #print "file = ", f
-	    try:
-            	file = open(f, "rb")
-		#print "file = ", f
-            except Exception, e:
-            	print "File open failed..."
+        check_dir_rec(connect, remote_dir[1:-1].split('/'))
+        connect.cwd(remote_dir)
+        for f in files:
+            #print "file = ", f
+            try:
+                    file = open(f, "rb")
+            #print "file = ", f
+            except Exception as e:
+                print ("File open failed...")
             else:
                 try:
                     connect.storbinary("STOR " + f, file)
-                except Exception , e:
-                    print e
+                except Exception as e:
+                    print (e)
                 else:
                     file.close()
 
@@ -529,26 +544,24 @@ def check_dir(ftp, dir):
     for f in filelist:
 	#print "[", f, "]"
         if ( (f.split()[-1] == dir) and (f.find('<DIR>') != -1) ):
-	    return True
-
+	        return True
     return False
 
 def check_dir_rec(ftp, descending_path_split):
     if len(descending_path_split) == 0:
-	return
+	    return
 
     #print descending_path_split
 
     next_level_dir = descending_path_split.pop(0)
     #print "check_dir_rec : ", next_level_dir
-
     rb = check_dir(ftp, next_level_dir)
-    if (rb == False):
-	#print next_level_dir
-	ftp.mkd(next_level_dir)
+    if (rb == False):   
+#print next_level_dir
+        ftp.mkd(next_level_dir)
+        ftp.cwd(next_level_dir)
 
-    ftp.cwd(next_level_dir)
-    check_dir_rec(ftp, descending_path_split)
+        check_dir_rec(ftp, descending_path_split)
 
 
 if __name__ == "__main__":
