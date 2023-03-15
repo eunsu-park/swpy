@@ -80,7 +80,7 @@ def get_list_from_HTTP_hourly(cur, ext_list = None):
     except:
         return list_fits
 
-    lines = response_str.split("\n")
+    lines = response_str.split("\\n")
     index = 0
     for str_line in lines:
         if str_line.find('<td><a href="hmi.M_720s_nrt.') == -1 :
@@ -117,7 +117,7 @@ def get_list_from_HTTP(pre, now, ext_list = None):
         list_fits = []
 
     compare_str = '<td><a href="hmi.M_720s_nrt.' + pre.strftime("%Y%m%d") + '_15'
-    lines = response_str.split("\n")
+    lines = response_str.split("\\n")
     index = 0
     for str_line in lines:
         if str_line.find('<td><a href="hmi.M_720s_nrt.') == -1 :
@@ -146,7 +146,7 @@ def get_list_from_HTTP(pre, now, ext_list = None):
     except:
         return list_fits
 
-    lines = response_str.split("\n")
+    lines = response_str.split("\\n")
     index = 0
     for str_line in lines:
         if str_line.find('<td><a href="hmi.M_720s_nrt.') == -1 :
@@ -162,6 +162,72 @@ def get_list_from_HTTP(pre, now, ext_list = None):
                 list_fits.append(strurl + file_name)
 
     return list_fits
+
+
+def get_list_from_HTTP_UTC(pre, post, ext_list = None):
+    import urllib.request
+
+    ################################
+    #   yesterday 00-23            #
+    ################################
+    strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + pre.strftime("%Y/%m/%d/") 
+    try:
+        response = urllib.request.urlopen(strurl)
+        
+        if (response == None):
+            return ""
+
+        response_str = str(response.read())
+        response.close()
+    finally:
+        list_fits = []
+
+    compare_str = '<td><a href="hmi.M_720s_nrt.' + pre.strftime("%Y%m%d") + '_15'
+    lines = response_str.split("\\n")
+    index = 0
+    for str_line in lines:
+        if str_line.find('<td><a href="hmi.M_720s_nrt.') == -1 :
+            continue
+        else:
+            index = str_line.find('<td><a href="hmi.M_720s_nrt.')
+            compare_index = str_line.find('_TAI.fits">') - 6
+
+            begin = index + 13
+            end = begin + 39
+            file_name = str_line[begin:end]
+            list_fits.append(strurl + file_name)
+
+    ###############################
+    #   today 00                  #
+    ###############################
+    strurl = "http://jsoc.stanford.edu/data/hmi/fits/" + post.strftime("%Y/%m/%d/")
+    try:
+        response = urllib.request.urlopen(strurl)
+        if (response == None):
+            return ""
+
+        response_str = str(response.read())
+        response.close()
+    except:
+        return list_fits
+
+    lines = response_str.split("\\n")
+    index = 0
+    for str_line in lines:
+        if str_line.find('<td><a href="hmi.M_720s_nrt.') == -1 :
+            continue
+        else:
+            index = str_line.find('<td><a href="hmi.M_720s_nrt.')
+            compare_index = str_line.find('_TAI.fits">') - 6
+
+            if (str_line[compare_index:compare_index+2] == '00'):
+                begin = index + 13
+                end = begin + 39
+                file_name = str_line[begin:end]
+                list_fits.append(strurl + file_name)
+
+    return list_fits
+
 
 
 def download_FITS():
@@ -183,6 +249,34 @@ def download_FITS():
             print ("Downloaded %s. " % (line))
         else:
             print ("Can not Download %s. " % (local_path))
+
+
+
+def download_FITS_UTC():
+    import datetime
+
+    now = datetime.datetime.utcnow()
+    str_now = str(now)
+    Date, _ = str_now.split(' ')
+    now = datetime.datetime.strptime("%s 00:00:00.000000" % (Date), '%Y-%m-%d %H:%M:%S.%f')
+
+    pre = now - datetime.timedelta(days=1)
+    post = now
+
+    list_fits = get_list_from_HTTP_UTC(pre, post, "fits")
+    local_dir = "/data/flare_forecast_in/" + now.strftime("%Y%m%d") + "/"
+   
+    print(len(list_fits))
+
+    for line in list_fits:
+        file_index = line.rfind('/') + 1
+        local_path = local_dir + line[file_index:]
+        rv = download_HTTP_file(line, local_path)
+        if (rv == True):
+            print ("Downloaded %s. " % (line))
+        else:
+            print ("Can not Download %s. " % (local_path))            
+
 
 
 def download_FITS_hourly():
@@ -208,8 +302,7 @@ def download_FITS_hourly():
         pre = now - datetime.timedelta(days = 1)
         list_fits = get_list_from_HTTP_hourly(pre, "fits")
 
-        #local_dir = "/data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
-        local_dir = "/home/eunsu/Drives/SWPy/hmi/data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
+        local_dir = "/data/flare_forecast_in/hourly/" + pre.strftime("%Y%m%d") + "/"
    
         print(len(list_fits))
 
@@ -302,38 +395,55 @@ def upload_SFTP():
 
 if __name__ == "__main__" :
 
+    import sys
     import datetime
+    import time
 
-    ## Test download_HTTP_file ##
+    #download_FITS_hourly()
+    #upload_corhole_FTP()
 
-    strSrcUrl = "http://swds.kasi.re.kr/data/arm/nasa/sdo/latest_193_1024.jpg"
-    strDstFile = "/home/eunsu/Drives/SWPy/hmi/tmp.jpg"
-    download_HTTP_file(strSrcUrl, strDstFile)
+#    if (datetime.datetime.today().hour == 2):
+    download_FITS_UTC()
+
+    #if (datetime.datetime.today().hour == 7):
+    print('here')
+#    upload_FTP()
+
+    #if (datetime.datetime.today().hour == 11):
+    #upload_corhole_FTP()
+
+    # import datetime
+
+    # ## Test download_HTTP_file ##
+
+    # strSrcUrl = "http://swds.kasi.re.kr/data/arm/nasa/sdo/latest_193_1024.jpg"
+    # strDstFile = "/home/eunsu/Drives/SWPy/hmi/tmp.jpg"
+    # download_HTTP_file(strSrcUrl, strDstFile)
 
 
-    ## Test get_list_from_HTTP_hourly ##
+    # ## Test get_list_from_HTTP_hourly ##
 
-    now = datetime.datetime.utcnow()
-    list_fits = get_list_from_HTTP_hourly(now, "fits")
-    print(list_fits)
-
-
-    ## Test get_list_from_HTTP ##
-
-    pre = datetime.datetime.utcnow() - datetime.timedelta(days = 1, hours = 15)
-    now = datetime.datetime.utcnow() - datetime.timedelta(hours = 15)
-    list_fits = get_list_from_HTTP(pre, now, "fits")
-    print(list_fits)
+    # now = datetime.datetime.utcnow()
+    # list_fits = get_list_from_HTTP_hourly(now, "fits")
+    # print(list_fits)
 
 
-    ## Test download_FITS() ##
+    # ## Test get_list_from_HTTP ##
 
-    download_FITS()
+    # pre = datetime.datetime.utcnow() - datetime.timedelta(days = 1, hours = 15)
+    # now = datetime.datetime.utcnow() - datetime.timedelta(hours = 15)
+    # list_fits = get_list_from_HTTP(pre, now, "fits")
+    # print(list_fits)
 
-    ## Test download_FITS_hourly ##
 
-    download_FITS_hourly()
+    # ## Test download_FITS() ##
 
-    ## Test upload_FTP ##
+    # download_FITS()
 
-    upload_SFTP()
+    # ## Test download_FITS_hourly ##
+
+    # download_FITS_hourly()
+
+    # ## Test upload_FTP ##
+
+    # upload_SFTP()
