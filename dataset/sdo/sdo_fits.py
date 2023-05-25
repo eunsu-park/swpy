@@ -238,7 +238,7 @@ class SDOFitsDataset():
 class AIAFitsDataset(SDOFitsDataset):
     def __init__(self, filepath):
         super(AIAFitsDataset, self).__init__(filepath)
-        self.normalize()
+#        self.normalize()
 
     def normalize(self):
         exptime = self.header["EXPTIME"]
@@ -260,7 +260,7 @@ class AIAFitsDataset(SDOFitsDataset):
         ymax = naxis2 / 2. * cdelt2
 
         wavelnth = self.header['WAVELNTH']
-        data = self.data
+        data = self.data / self.header["EXPTIME"]
         if wavelnth == 94:
             data = np.sqrt((data*4.99803).clip(1.5, 50.))
         elif wavelnth == 131:
